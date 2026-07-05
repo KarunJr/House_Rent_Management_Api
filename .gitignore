@@ -3,6 +3,9 @@
 ##
 ## Get latest from `dotnet new gitignore`
 
+# RestClient files
+*.http
+
 # dotenv files
 .env
 
