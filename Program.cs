@@ -1,28 +1,11 @@
-using HouseRentMgmt.Api.Data;
-using HouseRentMgmt.Api.Endpoints;
-using HouseRentMgmt.Api.Extensions;
-using HouseRentMgmt.Api.Models;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
+using HouseRentMgmt.Api.Features;
+using HouseRentMgmt.Api.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
-builder.Services.AddAuthenticationService(builder.Configuration);
-builder.Services.AddCorsService();
-builder.Services.AddTokenService();
-
-builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
-{
-    options.User.RequireUniqueEmail = true;
-})
-.AddEntityFrameworkStores<ApplicationDbContext>()
-.AddDefaultTokenProviders();
-
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("NeonDbConnection"))
-);
-
+builder.Services.AddInfrastructureServices(builder.Configuration);
+builder.Services.AddAllFeatureServices();
 
 var app = builder.Build();
 
@@ -37,7 +20,10 @@ app.UseCors("NextJsPolicy");
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapAuthEndpoints();
+
+var api = app.MapGroup("/webservice/v1/api");
+
+api.MapAllApplicationEndPoints();
 
 app.Run();
 

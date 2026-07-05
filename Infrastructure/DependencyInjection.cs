@@ -1,14 +1,25 @@
+
 using System.Text;
-using HouseRentMgmt.Api.Services;
-using HouseRentMgmt.Api.Services.Interfaces;
+using HouseRentMgmt.Api.Infrastructure.Data;
+using HouseRentMgmt.Api.Infrastructure.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
-namespace HouseRentMgmt.Api.Extensions;
+namespace HouseRentMgmt.Api.Infrastructure;
 
-public static class ServiceExtensions
+public static class DependencyInjection
 {
-    public static IServiceCollection AddCorsService(this IServiceCollection services)
+    public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration config)
+    {
+        services.AddCors();
+        services.AddAuthentication(config);
+        services.AddDatabaseAndIdentity(config);
+
+        return services;
+    }
+    private static IServiceCollection AddCors(this IServiceCollection services)
     {
         services.AddCors(options =>
         {
@@ -22,7 +33,7 @@ public static class ServiceExtensions
         return services;
     }
 
-    public static IServiceCollection AddAuthenticationService(this IServiceCollection services, IConfiguration config)
+    private static IServiceCollection AddAuthentication(this IServiceCollection services, IConfiguration config)
     {
         services.AddAuthentication(options =>
         {
@@ -49,14 +60,19 @@ public static class ServiceExtensions
         return services;
     }
 
-    public static IServiceCollection AddTokenService(this IServiceCollection service)
-    {   
-        service.AddScoped<ITokenService, TokenService>();
+    private static IServiceCollection AddDatabaseAndIdentity(this IServiceCollection services, IConfiguration config)
+    {
+        services.AddDbContext<ApplicationDbContext>(options =>
+        {
+            options.UseNpgsql(config["ConnectionStrings:NeonDbConnection"]);
+        });
 
-        return service;
+        services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
+        {
+            options.User.RequireUniqueEmail = true;
+        })
+        .AddEntityFrameworkStores<ApplicationDbContext>()
+        .AddDefaultTokenProviders();
+        return services;
     }
-    // public static IServiceCollection AddCustomService(this IServiceCollection services)
-    // {
-    //     return services;
-    // }
 }

@@ -1,5 +1,4 @@
-namespace HouseRentMgmt.Api.DTO;
-
+namespace HouseRentMgmt.Api.Features.Auth;
 
 public record TokenUserDto
 (
@@ -15,4 +14,12 @@ public record CreateUserDto
     string Email,
     string Password,
     string Phone
+);
+
+public record ResponseUserDto
+(
+    Guid Id,
+    string Name, 
+    string Username,
+    string Email
 );
