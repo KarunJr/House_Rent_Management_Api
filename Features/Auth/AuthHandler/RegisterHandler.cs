@@ -11,13 +11,25 @@ public static class RegisterHandler
         app.MapPost("/register", HandleAsync);
     }
 
-    public static async Task<IResult> HandleAsync(ITokenService tokenService, CreateUserDto userDto, UserManager<ApplicationUser> userManager, HttpContext httpContext, ICookieService cookie)
+    public static async Task<IResult> HandleAsync
+    (
+        CreateUserDto userDto,
+        UserManager<ApplicationUser> userManager,
+        ITokenService tokenService,
+        ICookieService cookie,
+        HttpContext httpContext
+    )
     {
-        var userExists = await userManager.FindByEmailAsync(userDto.Email);
-
-        if (userExists != null)
+        var emailExist = await userManager.FindByEmailAsync(userDto.Email);
+        if (emailExist != null)
         {
             return Results.BadRequest(new { message = "Email is already registered." });
+        }
+
+        var userExist = await userManager.FindByNameAsync(userDto.Username);
+        if (userExist != null)
+        {
+            return Results.BadRequest(new { message = "Username is already taken." });
         }
 
         var newUser = new ApplicationUser
@@ -29,18 +41,28 @@ public static class RegisterHandler
         };
 
         var result = await userManager.CreateAsync(newUser, userDto.Password);
+        // This is for Concurrency.
         if (!result.Succeeded)
         {
-            var errors = result.Errors.Select(e => e.Description);
+            if (result.Errors.Any(e => e.Code == "DuplicateEmail"))
+            {
+                return Results.BadRequest(new { message = "Email is already registered." });
+            }
+            if (result.Errors.Any(e => e.Code == "DuplicateUserName"))
+            {
+                return Results.BadRequest(new { message = "Username is already taken." });
+            }
+
+            var errors = result.Errors.Select(e => e.Description).ToList();
             return Results.BadRequest(new { errors });
         }
         var tokenValues = new TokenUserDto(newUser.Id, newUser.Name, newUser.UserName);
         var token = tokenService.GenerateToken(tokenValues);
-        
+
 
         cookie.SetCookie(context: httpContext, "jwt_accesstoken", token);
 
         Console.WriteLine($"Token is created on {DateTime.Now} and Token is {token}");
-        return Results.Ok(new { message = "User reigstered successfully." });
+        return Results.Ok(new { message = "User registered successfully." });
     }
 };

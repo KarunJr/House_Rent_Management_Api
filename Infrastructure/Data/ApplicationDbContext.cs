@@ -16,5 +16,9 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         builder.Entity<ApplicationUser>()
             .Property(u => u.Id)
             .HasDefaultValueSql("gen_random_uuid()");
+        
+        builder.Entity<ApplicationUser>()
+            .HasIndex(u => u.NormalizedEmail)
+            .IsUnique();
     }
 }

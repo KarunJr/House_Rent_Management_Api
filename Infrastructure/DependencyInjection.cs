@@ -64,7 +64,7 @@ public static class DependencyInjection
     {
         services.AddDbContext<ApplicationDbContext>(options =>
         {
-            options.UseNpgsql(config["ConnectionStrings:NeonDbConnection"]);
+            options.UseNpgsql(config["ConnectionStrings:NeonDbConnection"] ?? throw new InvalidOperationException("Database connection string is missing"));
         });
 
         services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
