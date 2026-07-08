@@ -1,13 +1,12 @@
 using System.Security.Claims;
 using System.Text;
-using HouseRentMgmt.Api.DTO;
-using HouseRentMgmt.Api.Services.Interfaces;
+using HouseRentMgmt.Api.Features.Auth.AuthServices.Interfaces;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 
-namespace HouseRentMgmt.Api.Services;
+namespace HouseRentMgmt.Api.Features.Auth.AuthServices;
 
-public class TokenService(IConfiguration config): ITokenService
+public class TokenService(IConfiguration config) : ITokenService
 {
     public string GenerateToken(TokenUserDto user)
     {
@@ -20,10 +19,10 @@ public class TokenService(IConfiguration config): ITokenService
 
         var claims = new[]
         {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Name, user.Username),
-                new Claim("display_name", user.Name),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+                new Claim(JwtRegisteredClaimNames.UniqueName, user.Username),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new Claim("display_name", user.Name)
         };
 
         var tokenDescriptor = new SecurityTokenDescriptor

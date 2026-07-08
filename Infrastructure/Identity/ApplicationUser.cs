@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 
-namespace HouseRentMgmt.Api.Models;
+namespace HouseRentMgmt.Api.Infrastructure.Identity;
 
 public class ApplicationUser : IdentityUser<Guid>
 {

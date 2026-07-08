@@ -1,9 +1,9 @@
-using HouseRentMgmt.Api.Models;
+using HouseRentMgmt.Api.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace HouseRentMgmt.Api.Data;
+namespace HouseRentMgmt.Api.Infrastructure.Data;
 
 public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>(options)
 {
@@ -16,5 +16,9 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         builder.Entity<ApplicationUser>()
             .Property(u => u.Id)
             .HasDefaultValueSql("gen_random_uuid()");
+        
+        builder.Entity<ApplicationUser>()
+            .HasIndex(u => u.NormalizedEmail)
+            .IsUnique();
     }
 }
