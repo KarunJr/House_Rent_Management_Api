@@ -2,7 +2,7 @@
 
 #nullable disable
 
-namespace HouseRentMgmt.Api.Data.Migrations
+namespace HouseRentMgmt.Api.Infrastructure.Data.Migrations
 {
     /// <inheritdoc />
     public partial class EnforceUniqueEmail : Migration
