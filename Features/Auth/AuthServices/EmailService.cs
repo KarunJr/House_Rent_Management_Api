@@ -6,25 +6,25 @@ public class EmailService(HttpClient httpClient, IConfiguration config) : IEmail
 {
     public async Task SendEmailAsync(string email, string name, string token)
     {
-            var apiUrl = config["Email:BrevoAPIUrl"]
-                ?? throw new InvalidOperationException("Brevo API URL is missing.");
+        var apiUrl = config["Email:BrevoAPIUrl"]
+            ?? throw new InvalidOperationException("Brevo API URL is missing.");
 
-            var apiKey = config["Email:BrevoAPIKey"]
-                ?? throw new InvalidOperationException("Brevo API Key is missing.");
+        var apiKey = config["Email:BrevoAPIKey"]
+            ?? throw new InvalidOperationException("Brevo API Key is missing.");
 
-            var emailPayload = new
-            {
-                templateId = config["Email:BrevoTemplateId"],
-                to = new[]
-              {
+        var emailPayload = new
+        {
+            templateId = int.Parse(config["Email:BrevoTemplateId"] ?? throw new InvalidOperationException("Brevo Template Id is missing.")),
+            to = new[]
+          {
               new {name, email},
           },
-                @params = new
-                {
-                    name,
-                    code = token
-                }
-            };
+            @params = new
+            {
+                name,
+                code = token
+            }
+        };
         try
         {
             using var request = new HttpRequestMessage(HttpMethod.Post, apiUrl);
@@ -44,8 +44,8 @@ public class EmailService(HttpClient httpClient, IConfiguration config) : IEmail
         }
         catch (Exception ex)
         {
-           Console.WriteLine($"An unexpected error occurred while sending email to {email}. Details: {ex}"); 
-           throw;
+            Console.WriteLine($"An unexpected error occurred while sending email to {email}. Details: {ex}");
+            throw;
         }
     }
 }
