@@ -1,3 +1,4 @@
+using HouseRentMgmt.Api.Features.Auth.Entities;
 using HouseRentMgmt.Api.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -20,5 +21,18 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         builder.Entity<ApplicationUser>()
             .HasIndex(u => u.NormalizedEmail)
             .IsUnique();
+
+        builder.Entity<EmailVerificationCode>()
+            .Property(u => u.Id)
+            .HasDefaultValueSql("gen_random_uuid()");
+        
+        builder.Entity<EmailVerificationCode>()
+            .HasOne(u => u.User)
+            .WithMany()
+            .HasForeignKey(e => e.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
+
+    public DbSet<EmailVerificationCode> EmailVerificationCode => Set<EmailVerificationCode>();
+
 }
