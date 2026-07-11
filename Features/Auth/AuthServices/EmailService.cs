@@ -14,7 +14,7 @@ public class EmailService(HttpClient httpClient, IConfiguration config) : IEmail
 
             var emailPayload = new
             {
-                templateId = 1,
+                templateId = config["Email:BrevoTemplateId"],
                 to = new[]
               {
               new {name, email},

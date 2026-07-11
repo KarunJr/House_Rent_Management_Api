@@ -56,16 +56,33 @@ public static class RegisterHandler
             var errors = result.Errors.Select(e => e.Description).ToList();
             return Results.BadRequest(new { errors });
         }
+
         Guid userId = newUser.Id;
         var otp = otpService.GenerateOtp();
-        var emailVerify = new EmailVerificationCode
+        try
         {
-            UserId = userId,
-            OtpCode = otp,
-            AttemptCount = 0
-        };
-        await dbContext.EmailVerificationCode.AddAsync(emailVerify);
-        await dbContext.SaveChangesAsync();
+            var emailVerify = new EmailVerificationCode
+            {
+                UserId = userId,
+                OtpCode = otp,
+                AttemptCount = 0
+            };
+            await dbContext.EmailVerificationCode.AddAsync(emailVerify);
+            await dbContext.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Registration email failed for {newUser.Email}. Error: {ex.Message}");
+            try
+            {
+                await userManager.DeleteAsync(newUser);
+            }
+            catch (Exception deleteEx)
+            {
+                Console.WriteLine($"Critical: Failed to roll back/delete user account {userId}. Error: {deleteEx.Message}");
+            }
+            return Results.InternalServerError(new { message = "An internal error occurred during registration." });
+        }
 
         var createdUser = new ResponseUserDto(
             Id: newUser.Id,
@@ -89,7 +106,7 @@ public static class RegisterHandler
                 createdUser
             });
         }
-        
+
         return Results.Ok(new
         {
             message = "User registered successfully. Please check your email for the verification code.",

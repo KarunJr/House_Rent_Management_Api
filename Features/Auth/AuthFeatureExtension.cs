@@ -12,7 +12,10 @@ public static class AuthFeatureExtension
         service.AddScoped<ICookieService, CookieService>();
         service.AddScoped<IOtpService, OtpService>();
 
-        service.AddHttpClient<IEmailService, EmailService>();
+        service.AddHttpClient<IEmailService, EmailService>(client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(10);
+        });
 
         return service;
     }
