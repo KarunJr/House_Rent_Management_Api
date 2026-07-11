@@ -1,4 +1,6 @@
 using HouseRentMgmt.Api.Features.Auth.AuthServices.Interfaces;
+using HouseRentMgmt.Api.Features.Auth.Entities;
+using HouseRentMgmt.Api.Infrastructure.Data;
 using HouseRentMgmt.Api.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 
@@ -15,19 +17,17 @@ public static class RegisterHandler
     (
         CreateUserDto userDto,
         UserManager<ApplicationUser> userManager,
-        ITokenService tokenService,
-        ICookieService cookie,
-        HttpContext httpContext
+        ApplicationDbContext dbContext,
+        IOtpService otpService,
+        IEmailService emailService
     )
     {
-        var emailExist = await userManager.FindByEmailAsync(userDto.Email);
-        if (emailExist != null)
+        if (await userManager.FindByEmailAsync(userDto.Email) != null)
         {
             return Results.BadRequest(new { message = "Email is already registered." });
         }
 
-        var userExist = await userManager.FindByNameAsync(userDto.Username);
-        if (userExist != null)
+        if (await userManager.FindByNameAsync(userDto.Username) != null)
         {
             return Results.BadRequest(new { message = "Username is already taken." });
         }
@@ -56,13 +56,62 @@ public static class RegisterHandler
             var errors = result.Errors.Select(e => e.Description).ToList();
             return Results.BadRequest(new { errors });
         }
-        var tokenValues = new TokenUserDto(newUser.Id, newUser.Name, newUser.UserName);
-        var token = tokenService.GenerateToken(tokenValues);
 
+        Guid userId = newUser.Id;
+        var otp = otpService.GenerateOtp();
+        try
+        {
+            var emailVerify = new EmailVerificationCode
+            {
+                UserId = userId,
+                OtpCode = otp,
+                AttemptCount = 0
+            };
+            await dbContext.EmailVerificationCode.AddAsync(emailVerify);
+            await dbContext.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Registration email failed for {newUser.Email}. Error: {ex.Message}");
+            try
+            {
+                await userManager.DeleteAsync(newUser);
+            }
+            catch (Exception deleteEx)
+            {
+                Console.WriteLine($"Critical: Failed to roll back/delete user account {userId}. Error: {deleteEx.Message}");
+            }
+            return Results.InternalServerError(new { message = "An internal error occurred during registration." });
+        }
 
-        cookie.SetCookie(context: httpContext, "jwt_accesstoken", token);
+        var createdUser = new ResponseUserDto(
+            Id: newUser.Id,
+            Name: newUser.Name,
+            Username: newUser.UserName,
+            Email: newUser.Email
+        );
 
-        Console.WriteLine($"Token is created on {DateTime.Now} and Token is {token}");
-        return Results.Ok(new { message = "User registered successfully." });
+        try
+        {
+            await emailService.SendEmailAsync(newUser.Email, newUser.Name, otp);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Registration email failed for {newUser.Email}. Error: {ex.Message}");
+
+            return Results.Ok(new
+            {
+                message = "User registered successfully, but we couldn't send the verification email right now. Please log in and request a new code.",
+                emailSent = false,
+                createdUser
+            });
+        }
+
+        return Results.Ok(new
+        {
+            message = "User registered successfully. Please check your email for the verification code.",
+            emailSent = true,
+            createdUser
+        });
     }
 };
