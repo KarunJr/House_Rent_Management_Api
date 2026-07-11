@@ -10,6 +10,9 @@ public static class AuthFeatureExtension
     {
         service.AddScoped<ITokenService, TokenService>();
         service.AddScoped<ICookieService, CookieService>();
+        service.AddScoped<IOtpService, OtpService>();
+
+        service.AddHttpClient<IEmailService, EmailService>();
 
         return service;
     }
