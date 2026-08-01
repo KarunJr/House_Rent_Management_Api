@@ -1,4 +1,3 @@
-
 using System.Text;
 using HouseRentMgmt.Api.Infrastructure.Data;
 using HouseRentMgmt.Api.Infrastructure.Identity;
@@ -23,9 +22,9 @@ public static class DependencyInjection
     {
         services.AddCors(options =>
         {
-            options.AddPolicy("NextJsPolicy", policy =>
+            options.AddPolicy("FrontendPolicy", policy =>
             {
-                policy.WithOrigins("http://localhost:3000")
+                policy.WithOrigins("http://localhost:8081", "http://192.168.1.50:8081")
                 .AllowAnyHeader()
                 .AllowAnyMethod();
             });
