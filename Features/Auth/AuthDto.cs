@@ -36,6 +36,10 @@ public record VerifyEmailRequestDto
     string Email,
     string Otp
 );
+public record VerifyEmailResponseDto
+(
+    string Message
+);
 
 // This response must be put in global area not here: Do later
 public record ApiErrorResponse(
