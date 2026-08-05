@@ -50,7 +50,7 @@ public static class VerifyEmail
                     dbContext.EmailVerificationCode.Remove(otp);
                     await dbContext.SaveChangesAsync();
 
-                    return Results.Ok(new VerifyEmailResponseDto(Message: "Email verified successfully"));
+                    return Results.Ok(new VerifyEmailResponseDto(Success: true, Message: "Email verified successfully"));
 
                 case OtpVerificationResult.InvalidCode:
                     await dbContext.SaveChangesAsync();

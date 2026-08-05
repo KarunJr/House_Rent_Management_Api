@@ -38,7 +38,17 @@ public record VerifyEmailRequestDto
 );
 public record VerifyEmailResponseDto
 (
+    bool Success,
     string Message
+);
+public record ResendOtpRequestDto
+(
+    string Email
+);
+public record ResendOtpResponseDto
+(
+    string Message,
+    bool EmailSent
 );
 
 // This response must be put in global area not here: Do later
