@@ -24,7 +24,8 @@ public static class AuthFeatureExtension
     {
         var group = app.MapGroup("/auth");
         group.MapRegister();
-
+        group.MapVerifyEmail();
+        group.MapResendEmail();
         return app;
     }
 }

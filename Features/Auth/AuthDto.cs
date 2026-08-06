@@ -7,7 +7,7 @@ public record TokenUserDto
     string Username
 );
 
-public record CreateUserDto
+public record UserRegistrationRequestDto
 (
     string Name,
     string Username,
@@ -16,10 +16,45 @@ public record CreateUserDto
     string Phone
 );
 
-public record ResponseUserDto
+public record UserResponseDto
 (
     Guid Id,
-    string Name, 
+    string Name,
     string Username,
     string Email
+);
+
+public record UserRegistrationResponseDto
+(
+    string Message,
+    bool EmailSent,
+    UserResponseDto CreatedUser
+);
+
+public record VerifyEmailRequestDto
+(
+    string Email,
+    string Otp
+);
+public record VerifyEmailResponseDto
+(
+    bool Success,
+    string Message,
+    UserResponseDto CreatedUser,
+    string Token
+);
+public record ResendOtpRequestDto
+(
+    string Email
+);
+public record ResendOtpResponseDto
+(
+    string Message,
+    bool EmailSent
+);
+
+// This response must be put in global area not here: Do later
+public record ApiErrorResponse(
+    string Message,
+    List<string>? Errors = null
 );

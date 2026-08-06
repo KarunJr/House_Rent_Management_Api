@@ -15,7 +15,7 @@ public static class RegisterHandler
 
     public static async Task<IResult> HandleAsync
     (
-        CreateUserDto userDto,
+        UserRegistrationRequestDto userDto,
         UserManager<ApplicationUser> userManager,
         ApplicationDbContext dbContext,
         IOtpService otpService,
@@ -24,12 +24,12 @@ public static class RegisterHandler
     {
         if (await userManager.FindByEmailAsync(userDto.Email) != null)
         {
-            return Results.BadRequest(new { message = "Email is already registered." });
+            return Results.BadRequest(new ApiErrorResponse(Message: "Email is already registered."));
         }
 
         if (await userManager.FindByNameAsync(userDto.Username) != null)
         {
-            return Results.BadRequest(new { message = "Username is already taken." });
+            return Results.BadRequest(new ApiErrorResponse(Message: "Username is already taken."));
         }
 
         var newUser = new ApplicationUser
@@ -46,15 +46,15 @@ public static class RegisterHandler
         {
             if (result.Errors.Any(e => e.Code == "DuplicateEmail"))
             {
-                return Results.BadRequest(new { message = "Email is already registered." });
+                return Results.BadRequest(new ApiErrorResponse(Message: "Email is already registered."));
             }
             if (result.Errors.Any(e => e.Code == "DuplicateUserName"))
             {
-                return Results.BadRequest(new { message = "Username is already taken." });
+                return Results.BadRequest(new ApiErrorResponse(Message: "Username is already taken."));
             }
 
             var errors = result.Errors.Select(e => e.Description).ToList();
-            return Results.BadRequest(new { errors });
+            return Results.BadRequest(new ApiErrorResponse(Message: "Registration failed.", Errors: errors));
         }
 
         Guid userId = newUser.Id;
@@ -81,10 +81,10 @@ public static class RegisterHandler
             {
                 Console.WriteLine($"Critical: Failed to roll back/delete user account {userId}. Error: {deleteEx.Message}");
             }
-            return Results.InternalServerError(new { message = "An internal error occurred during registration." });
+            return Results.InternalServerError(new ApiErrorResponse(Message: "An internal error occurred during registration."));
         }
 
-        var createdUser = new ResponseUserDto(
+        var createdUser = new UserResponseDto(
             Id: newUser.Id,
             Name: newUser.Name,
             Username: newUser.UserName,
@@ -99,19 +99,18 @@ public static class RegisterHandler
         {
             Console.WriteLine($"Registration email failed for {newUser.Email}. Error: {ex.Message}");
 
-            return Results.Ok(new
-            {
-                message = "User registered successfully, but we couldn't send the verification email right now. Please log in and request a new code.",
-                emailSent = false,
-                createdUser
-            });
+            return Results.Ok(new UserRegistrationResponseDto(
+                Message: "User registered successfully, but we couldn't send the verification email right now. Please log in and request a new code.",
+                EmailSent: false,
+                CreatedUser: createdUser
+            ));
         }
 
-        return Results.Ok(new
-        {
-            message = "User registered successfully. Please check your email for the verification code.",
-            emailSent = true,
-            createdUser
-        });
+        return Results.Ok(new UserRegistrationResponseDto
+        (
+            Message: "User registered successfully. Please check your email for the verification code.",
+            EmailSent: true,
+            CreatedUser: createdUser
+        ));
     }
 };

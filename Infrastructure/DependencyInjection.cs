@@ -1,4 +1,3 @@
-
 using System.Text;
 using HouseRentMgmt.Api.Infrastructure.Data;
 using HouseRentMgmt.Api.Infrastructure.Identity;
@@ -13,19 +12,19 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration config)
     {
-        services.AddCors();
-        services.AddAuthentication(config);
+        services.AddCorsExtension();
+        services.AddJwtAuthentication(config);
         services.AddDatabaseAndIdentity(config);
 
         return services;
     }
-    private static IServiceCollection AddCors(this IServiceCollection services)
+    private static IServiceCollection AddCorsExtension(this IServiceCollection services)
     {
         services.AddCors(options =>
         {
-            options.AddPolicy("NextJsPolicy", policy =>
+            options.AddPolicy("FrontendPolicy", policy =>
             {
-                policy.WithOrigins("http://localhost:3000")
+                policy.WithOrigins("http://localhost:8081", "http://192.168.1.50:8081")
                 .AllowAnyHeader()
                 .AllowAnyMethod();
             });
@@ -33,7 +32,7 @@ public static class DependencyInjection
         return services;
     }
 
-    private static IServiceCollection AddAuthentication(this IServiceCollection services, IConfiguration config)
+    private static IServiceCollection AddJwtAuthentication(this IServiceCollection services, IConfiguration config)
     {
         services.AddAuthentication(options =>
         {
