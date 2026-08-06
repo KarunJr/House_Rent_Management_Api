@@ -17,13 +17,14 @@ public static class VerifyEmail
         VerifyEmailRequestDto verifyDto,
         UserManager<ApplicationUser> userManager,
         ApplicationDbContext dbContext,
-        IOtpService otpService
+        IOtpService otpService,
+        ITokenService tokenService
     )
     {
         try
         {
             var user = await userManager.FindByEmailAsync(verifyDto.Email);
-            if (user == null)
+            if (user == null || string.IsNullOrEmpty(user.Email) || string.IsNullOrEmpty(user.UserName))
             {
                 return Results.BadRequest(new ApiErrorResponse(Message: "User not found"));
             }
@@ -49,8 +50,22 @@ public static class VerifyEmail
                     await userManager.UpdateAsync(user);
                     dbContext.EmailVerificationCode.Remove(otp);
                     await dbContext.SaveChangesAsync();
-
-                    return Results.Ok(new VerifyEmailResponseDto(Success: true, Message: "Email verified successfully"));
+                    var token = tokenService.GenerateToken(new TokenUserDto(
+                        Id: user.Id,
+                        Name: user.Name,
+                        Username: user.UserName
+                    ));
+                    return Results.Ok(new VerifyEmailResponseDto(
+                        Success: true,
+                        Message: "Email verified successfully",
+                        CreatedUser: new UserResponseDto(
+                            Id: user.Id,
+                            Name: user.Name,
+                            Username: user.UserName,
+                            Email: user.Email
+                        ),
+                        Token: token
+                    ));
 
                 case OtpVerificationResult.InvalidCode:
                     await dbContext.SaveChangesAsync();

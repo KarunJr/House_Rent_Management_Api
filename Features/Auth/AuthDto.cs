@@ -39,7 +39,9 @@ public record VerifyEmailRequestDto
 public record VerifyEmailResponseDto
 (
     bool Success,
-    string Message
+    string Message,
+    UserResponseDto CreatedUser,
+    string Token
 );
 public record ResendOtpRequestDto
 (

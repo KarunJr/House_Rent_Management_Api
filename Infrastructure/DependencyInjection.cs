@@ -12,13 +12,13 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration config)
     {
-        services.AddCors();
-        services.AddAuthentication(config);
+        services.AddCorsExtension();
+        services.AddJwtAuthentication(config);
         services.AddDatabaseAndIdentity(config);
 
         return services;
     }
-    private static IServiceCollection AddCors(this IServiceCollection services)
+    private static IServiceCollection AddCorsExtension(this IServiceCollection services)
     {
         services.AddCors(options =>
         {
@@ -32,7 +32,7 @@ public static class DependencyInjection
         return services;
     }
 
-    private static IServiceCollection AddAuthentication(this IServiceCollection services, IConfiguration config)
+    private static IServiceCollection AddJwtAuthentication(this IServiceCollection services, IConfiguration config)
     {
         services.AddAuthentication(options =>
         {
