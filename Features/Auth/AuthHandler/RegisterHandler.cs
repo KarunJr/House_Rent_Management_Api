@@ -1,3 +1,5 @@
+using System.Net;
+using HouseRentMgmt.Api.Features.Auth.AuthServices;
 using HouseRentMgmt.Api.Features.Auth.AuthServices.Interfaces;
 using HouseRentMgmt.Api.Features.Auth.Entities;
 using HouseRentMgmt.Api.Infrastructure.Data;
@@ -94,6 +96,22 @@ public static class RegisterHandler
         try
         {
             await emailService.SendEmailAsync(newUser.Email, newUser.Name, otp);
+        }
+        catch (BrevoEmailException brevoEx)
+        {
+            string userFriendlyMsg = brevoEx.StatusCode switch
+            {
+                HttpStatusCode.Unauthorized => "Email system misconfigured. Please contact support.",
+                HttpStatusCode.PaymentRequired => "Email delivery is temporarily paused.",
+                HttpStatusCode.BadRequest => "Invalid request details provided.",
+                _ => "We couldn't send the code right now, please request a new one."
+            };
+
+            return Results.Ok(new UserRegistrationResponseDto(
+                Message: userFriendlyMsg,
+                EmailSent: false,
+                CreatedUser: createdUser
+            ));
         }
         catch (Exception ex)
         {

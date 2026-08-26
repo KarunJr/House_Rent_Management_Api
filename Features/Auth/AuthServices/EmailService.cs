@@ -34,8 +34,11 @@ public class EmailService(HttpClient httpClient, IConfiguration config) : IEmail
             request.Content = JsonContent.Create(emailPayload);
 
             var response = await httpClient.SendAsync(request);
-
-            response.EnsureSuccessStatusCode();
+            var responseBody = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new BrevoEmailException(statusCode: response.StatusCode, responseBody: responseBody);
+            }
         }
         catch (HttpRequestException ex)
         {

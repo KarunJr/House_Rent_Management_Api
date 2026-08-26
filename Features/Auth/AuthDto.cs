@@ -64,6 +64,7 @@ public record LoginResponseDto
     string Message,
     UserResponseDto? User,
     bool? EmailVerified,
+    bool? EmailSent,
     string? Token
 );
 

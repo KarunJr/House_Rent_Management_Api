@@ -1,5 +1,6 @@
+using System.Net;
+using HouseRentMgmt.Api.Features.Auth.AuthServices;
 using HouseRentMgmt.Api.Features.Auth.AuthServices.Interfaces;
-using HouseRentMgmt.Api.Features.Auth.Entities;
 using HouseRentMgmt.Api.Infrastructure.Data;
 using HouseRentMgmt.Api.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
@@ -29,6 +30,7 @@ public static class LoginHandler
             Message: "Invalid username/email or password",
             User: null,
             EmailVerified: null,
+            EmailSent: null,
             Token: null
         ));
         try
@@ -55,34 +57,50 @@ public static class LoginHandler
 
             if (!user.EmailConfirmed)
             {
-                var existingOtps = await dbContext.EmailVerificationCode.Where(x => x.UserId == user.Id).ToListAsync();
-
-                if (existingOtps.Count != 0)
-                {
-                    dbContext.EmailVerificationCode.RemoveRange(existingOtps);
-                    await dbContext.SaveChangesAsync();
-                }
                 var otp = otpService.GenerateOtp();
+                var now = DateTime.UtcNow;
+                var expiresAt = now.AddMinutes(10);
                 try
                 {
-                    var emailVerify = new EmailVerificationCode
-                    {
-                        UserId = user.Id,
-                        OtpCode = otp,
-                        AttemptCount = 0
-                    };
-                    await dbContext.EmailVerificationCode.AddAsync(emailVerify);
-                    await dbContext.SaveChangesAsync();
+                    await dbContext.Database.ExecuteSqlInterpolatedAsync($@"
+                        INSERT INTO ""EmailVerificationCode"" (""UserId"", ""OtpCode"", ""CreatedAt"", ""ExpiresAt"", ""AttemptCount"")
+                        VALUES ({user.Id}, {otp}, {now}, {expiresAt}, 0)
+                        ON CONFLICT (""UserId"")
+                        DO UPDATE SET
+                            ""OtpCode"" = {otp}, 
+                            ""CreatedAt"" = {now},
+                            ""ExpiresAt"" = {expiresAt},
+                            ""AttemptCount"" = 0;
+                    ");
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"OTP email failed to send for {user.Email}. Error: {ex.Message}");
-                    return Results.InternalServerError(new ApiErrorResponse(Message: "An internal error occurred during registration."));
+                    Console.WriteLine($"Failed to save verification OTP to database for {user.Email}. Error: {ex.Message}");
+                    return Results.InternalServerError(new ApiErrorResponse(Message: "An internal error occurred during login."));
                 }
 
                 try
                 {
                     await emailService.SendEmailAsync(user.Email, user.Name, otp);
+                }
+                catch (BrevoEmailException brevoEx)
+                {
+                    string userFriendlyMsg = brevoEx.StatusCode switch
+                    {
+                        HttpStatusCode.Unauthorized => "Email system misconfigured. Please contact support.",
+                        HttpStatusCode.PaymentRequired => "Email delivery is temporarily paused.",
+                        HttpStatusCode.BadRequest => "Invalid request details provided.",
+                        _ => "We couldn't send the code right now, please request a new one."
+                    };
+
+                    return Results.Ok(new LoginResponseDto(
+                        Success: false,
+                        Message: userFriendlyMsg,
+                        User: userResponse,
+                        EmailVerified: false,
+                        EmailSent: false,
+                        Token: null
+                    ));
                 }
                 catch (Exception ex)
                 {
@@ -93,14 +111,17 @@ public static class LoginHandler
                         Message: "Please verify your email. We couldn't send the code right now, please request a new one.",
                         User: userResponse,
                         EmailVerified: false,
+                        EmailSent: false,
                         Token: null
                     ));
                 }
+
                 return Results.Ok(new LoginResponseDto(
                     Success: false,
-                    Message: "Please verify your email before logging in.",
+                    Message: "Your account is not verified yet. We have sent a verification email to your inbox—please check it to activate your account.",
                     User: userResponse,
                     EmailVerified: false,
+                    EmailSent: true,
                     Token: null
                 ));
             }
@@ -115,6 +136,7 @@ public static class LoginHandler
                 Message: "Logged in successfully",
                 User: userResponse,
                 EmailVerified: true,
+                EmailSent: null,
                 Token: token
             ));
         }
