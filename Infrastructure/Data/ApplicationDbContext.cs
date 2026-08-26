@@ -25,12 +25,16 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         builder.Entity<EmailVerificationCode>()
             .Property(u => u.Id)
             .HasDefaultValueSql("gen_random_uuid()");
-        
+
         builder.Entity<EmailVerificationCode>()
             .HasOne(u => u.User)
             .WithMany()
             .HasForeignKey(e => e.UserId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<EmailVerificationCode>()
+            .HasIndex(e => e.UserId)
+            .IsUnique();
     }
 
     public DbSet<EmailVerificationCode> EmailVerificationCode => Set<EmailVerificationCode>();

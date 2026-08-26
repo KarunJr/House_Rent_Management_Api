@@ -53,6 +53,21 @@ public record ResendOtpResponseDto
     bool EmailSent
 );
 
+public record LoginRequestDto
+(
+    string UsernameOrEmail,
+    string Password
+);
+public record LoginResponseDto
+(
+    bool Success,
+    string Message,
+    UserResponseDto? User,
+    bool? EmailVerified,
+    bool? EmailSent,
+    string? Token
+);
+
 // This response must be put in global area not here: Do later
 public record ApiErrorResponse(
     string Message,
