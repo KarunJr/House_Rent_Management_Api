@@ -2,7 +2,7 @@ using HouseRentMgmt.Api.Features.Auth.AuthServices.Interfaces;
 
 namespace HouseRentMgmt.Api.Features.Auth.AuthServices;
 
-public class EmailService(HttpClient httpClient, IConfiguration config) : IEmailService
+public class EmailService(HttpClient httpClient, IConfiguration config, ILogger<EmailService> logger) : IEmailService
 {
     public async Task SendEmailAsync(string email, string name, string token)
     {
@@ -40,14 +40,19 @@ public class EmailService(HttpClient httpClient, IConfiguration config) : IEmail
                 throw new BrevoEmailException(statusCode: response.StatusCode, responseBody: responseBody);
             }
         }
+        catch (BrevoEmailException ex)
+        {
+            logger.LogError(ex, "Email delivery provider rejected the request with status {StatusCode}.", (int)ex.StatusCode);
+            throw;
+        }
         catch (HttpRequestException ex)
         {
-            Console.WriteLine($"Brevo API call failed. Status Code: {ex.StatusCode} for email: {email}. Error: {ex.Message}");
+            logger.LogError(ex, "Email delivery request failed.");
             throw;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"An unexpected error occurred while sending email to {email}. Details: {ex}");
+            logger.LogError(ex, "Email delivery failed.");
             throw;
         }
     }

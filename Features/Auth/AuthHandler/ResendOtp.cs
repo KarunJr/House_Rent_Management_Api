@@ -22,9 +22,11 @@ public static class ResendOtp
         UserManager<ApplicationUser> userManager,
         ApplicationDbContext dbContext,
         IOtpService otpService,
-        IEmailService emailService
+        IEmailService emailService,
+        ILoggerFactory loggerFactory
     )
     {
+        var logger = loggerFactory.CreateLogger(nameof(ResendOtp));
         var user = await userManager.FindByEmailAsync(resendDto.Email);
 
         if (user == null || string.IsNullOrEmpty(user.Email))
@@ -59,7 +61,7 @@ public static class ResendOtp
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Resend OTP database save failed for {user.Email}. Error: {ex.Message}");
+            logger.LogError(ex, "Failed to save a replacement verification code for user {UserId}.", user.Id);
             return Results.InternalServerError(new ApiErrorResponse(Message: "An internal error occurred while generating the verification code."));
         }
         try
@@ -87,7 +89,7 @@ public static class ResendOtp
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Resend email failed for {user.Email}. Error: {ex.Message}");
+            logger.LogWarning(ex, "The verification email could not be resent for user {UserId}.", user.Id);
 
             return Results.InternalServerError(new ResendOtpResponseDto(
                 Message: "We couldn't send the verification email right now. Please log in and request a new code.",
