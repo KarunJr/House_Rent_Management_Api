@@ -21,9 +21,11 @@ public static class RegisterHandler
         UserManager<ApplicationUser> userManager,
         ApplicationDbContext dbContext,
         IOtpService otpService,
-        IEmailService emailService
+        IEmailService emailService,
+        ILoggerFactory loggerFactory
     )
     {
+        var logger = loggerFactory.CreateLogger(nameof(RegisterHandler));
         if (await userManager.FindByEmailAsync(userDto.Email) != null)
         {
             return Results.BadRequest(new ApiErrorResponse(Message: "Email is already registered."));
@@ -74,14 +76,18 @@ public static class RegisterHandler
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Registration email failed for {newUser.Email}. Error: {ex.Message}");
+            logger.LogError(ex, "Failed to create a verification code for user {UserId}.", userId);
             try
             {
-                await userManager.DeleteAsync(newUser);
+                var deleteResult = await userManager.DeleteAsync(newUser);
+                if (!deleteResult.Succeeded)
+                {
+                    logger.LogCritical("Failed to roll back user registration for user {UserId}.", userId);
+                }
             }
             catch (Exception deleteEx)
             {
-                Console.WriteLine($"Critical: Failed to roll back/delete user account {userId}. Error: {deleteEx.Message}");
+                logger.LogCritical(deleteEx, "Failed to roll back user registration for user {UserId}.", userId);
             }
             return Results.InternalServerError(new ApiErrorResponse(Message: "An internal error occurred during registration."));
         }
@@ -115,7 +121,7 @@ public static class RegisterHandler
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Registration email failed for {newUser.Email}. Error: {ex.Message}");
+            logger.LogWarning(ex, "Registration completed, but the verification email could not be sent for user {UserId}.", userId);
 
             return Results.Ok(new UserRegistrationResponseDto(
                 Message: "User registered successfully, but we couldn't send the verification email right now. Please log in and request a new code.",

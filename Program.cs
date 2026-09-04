@@ -3,6 +3,9 @@ using HouseRentMgmt.Api.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configure Logging
+builder.AddCustomLogging();
+
 builder.Services.AddOpenApi();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 builder.Services.AddAllFeatureServices();

@@ -18,9 +18,12 @@ public static class VerifyEmail
         UserManager<ApplicationUser> userManager,
         ApplicationDbContext dbContext,
         IOtpService otpService,
-        ITokenService tokenService
+        ITokenService tokenService,
+        ILoggerFactory loggerFactory
     )
     {
+        var logger = loggerFactory.CreateLogger(nameof(VerifyEmail));
+
         try
         {
             var user = await userManager.FindByEmailAsync(verifyDto.Email);
@@ -87,7 +90,7 @@ public static class VerifyEmail
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[Error] Exception occurred while verifying email for '{verifyDto.Email}': {ex.Message} | StackTrace: {ex.StackTrace}");
+            logger.LogError(ex, "Email verification failed.");
             return Results.InternalServerError(new ApiErrorResponse(Message: "An internal server error occurred while verifying the OTP. Please try again later."));
         }
     }

@@ -22,9 +22,12 @@ public static class LoginHandler
         ApplicationDbContext dbContext,
         IEmailService emailService,
         IOtpService otpService,
-        ITokenService tokenService
+        ITokenService tokenService,
+        ILoggerFactory loggerFactory
     )
     {
+        var logger = loggerFactory.CreateLogger(nameof(LoginHandler));
+
         var invalidCredentialsResponse = Results.Ok(new LoginResponseDto(
             Success: false,
             Message: "Invalid username/email or password",
@@ -75,7 +78,7 @@ public static class LoginHandler
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Failed to save verification OTP to database for {user.Email}. Error: {ex.Message}");
+                    logger.LogError(ex, "Failed to save a verification code for user {UserId}.", user.Id);
                     return Results.InternalServerError(new ApiErrorResponse(Message: "An internal error occurred during login."));
                 }
 
@@ -104,7 +107,7 @@ public static class LoginHandler
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"OTP email failed to send for {user.Email}. Error: {ex.Message}");
+                    logger.LogWarning(ex, "The verification email could not be sent for user {UserId}.", user.Id);
 
                     return Results.Ok(new LoginResponseDto(
                         Success: false,
@@ -131,6 +134,7 @@ public static class LoginHandler
                 Name: user.Name,
                 Username: user.UserName
             ));
+            logger.LogInformation("User {UserId} logged in successfully.", user.Id);
             return Results.Ok(new LoginResponseDto(
                 Success: true,
                 Message: "Logged in successfully",
@@ -142,7 +146,7 @@ public static class LoginHandler
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Login error: {ex.Message}");
+            logger.LogError(ex, "Login failed.");
             return Results.InternalServerError(new ApiErrorResponse("Something went wrong"));
         }
 
