@@ -65,6 +65,12 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .HasDatabaseName("unique_active_lease")
             .HasFilter("\"IsActive\"= TRUE");
 
+        builder.Entity<Room>()
+            .HasOne(r => r.User)
+            .WithMany(u => u.Rooms)
+            .HasForeignKey(r => r.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
     }
 
     public DbSet<EmailVerificationCode> EmailVerificationCode => Set<EmailVerificationCode>();

@@ -1,4 +1,5 @@
 using HouseRentMgmt.Api.Features.Auth;
+using HouseRentMgmt.Api.Features.Rooms;
 
 namespace HouseRentMgmt.Api.Features;
 
@@ -13,5 +14,6 @@ public static class FeatureExtension
     public static void MapAllApplicationEndPoints(this IEndpointRouteBuilder app)
     {
         app.MapAuthEndPoints();
+        app.MapRoomsEndpoints();
     }
 }

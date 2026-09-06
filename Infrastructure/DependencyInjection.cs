@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json.Serialization;
 using HouseRentMgmt.Api.Infrastructure.Data;
 using HouseRentMgmt.Api.Infrastructure.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -13,9 +14,11 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration config)
     {
         services.AddCorsExtension();
-        services.AddJwtAuthentication(config);
         services.AddDatabaseAndIdentity(config);
+        // Register JWT defaults after Identity, which configures cookie defaults.
+        services.AddJwtAuthentication(config);
 
+        services.AddJsonEnumSerialization();
         return services;
     }
     private static IServiceCollection AddCorsExtension(this IServiceCollection services)
@@ -72,6 +75,18 @@ public static class DependencyInjection
         })
         .AddEntityFrameworkStores<ApplicationDbContext>()
         .AddDefaultTokenProviders();
+        return services;
+    }
+
+    //This allows Frontend to request RoomStatus as Enum Value["Available", "Occupied", "Maintenance"] rahter than [0,1,2] and response with the actual value rahter than number 
+    private static IServiceCollection AddJsonEnumSerialization(this IServiceCollection services)
+    {
+        services.ConfigureHttpJsonOptions(options =>
+        {
+            options.SerializerOptions.Converters.Add(
+                new JsonStringEnumConverter(allowIntegerValues: false)
+            );
+        });
         return services;
     }
 }
