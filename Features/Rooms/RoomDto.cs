@@ -9,6 +9,14 @@ public record RoomRequestDto
     decimal BaseRentAmount,
     RoomStatus Status
 );
+public record EditRoomRequestDto
+(
+    Guid Id,
+    string FloorId,
+    string RoomName,
+    decimal BaseRentAmount,
+    RoomStatus Status
+);
 public record RoomResponseDto
 (
     bool Success,

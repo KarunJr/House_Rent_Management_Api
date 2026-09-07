@@ -6,8 +6,9 @@ public static class RoomsFeatureExtension
 {
     public static IEndpointRouteBuilder MapRoomsEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/room");
+        var group = app.MapGroup("/room").RequireAuthorization();
         group.MapAddRoom();
+        group.MapEditRoom();
 
         return app;
     }
