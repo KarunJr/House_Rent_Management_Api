@@ -75,6 +75,15 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .HasIndex(r => new {r.UserId, r.RoomName})
             .IsUnique();
 
+        builder.Entity<Tenant>()
+            .HasOne(t => t.User)
+            .WithMany(u => u.Tenants)
+            .HasForeignKey(t => t.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+        
+        builder.Entity<Tenant>()
+            .HasIndex(t => new {t.UserId, t.Phone})
+            .IsUnique();
     }
 
     public DbSet<EmailVerificationCode> EmailVerificationCode => Set<EmailVerificationCode>();

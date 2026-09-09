@@ -9,11 +9,12 @@ public static class EditRoom
 {
     public static void MapEditRoom(this IEndpointRouteBuilder app)
     {
-        app.MapPost("/edit", HandleAsync);
+        app.MapPut("/{id:guid}", HandleAsync);
     }
 
     public static async Task<IResult> HandleAsync
     (
+        Guid id,
         EditRoomRequestDto editRoomRequestDto,
         ClaimsPrincipal user,
         ApplicationDbContext dbContext,
@@ -28,7 +29,7 @@ public static class EditRoom
         }
 
         var room = await dbContext.Room.FirstOrDefaultAsync(
-            r => r.Id == editRoomRequestDto.Id && r.UserId == userId);
+            r => r.Id == id && r.UserId == userId);
 
         if (room is null)
         {
@@ -63,7 +64,7 @@ public static class EditRoom
         if (logger.IsEnabled(LogLevel.Information))
         {
             logger.LogInformation("Room {RoomId} edited by user {UserId} with status {RoomStatus}.",
-                editRoomRequestDto.Id, userId, editRoomRequestDto.Status);
+                id, userId, editRoomRequestDto.Status);
         }
 
         var response = new RoomDetailsDto(

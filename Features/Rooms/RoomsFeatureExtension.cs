@@ -9,6 +9,8 @@ public static class RoomsFeatureExtension
         var group = app.MapGroup("/room").RequireAuthorization();
         group.MapAddRoom();
         group.MapEditRoom();
+        group.MapGetRoom();
+        group.MapGetRoomById();
 
         return app;
     }

@@ -26,6 +26,7 @@
     <Folder Include="Features/Leases/" />
     <Folder Include="Features/Rooms/RoomHandler/" />
     <Folder Include="Features/Tenants/" />
+    <Folder Include="Features/Tenants/TenantHandler/" />
     <Folder Include="Infrastructure/Identity/" />
   </ItemGroup>
 

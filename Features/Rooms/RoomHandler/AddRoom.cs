@@ -10,7 +10,7 @@ public static class AddRoom
 {
     public static void MapAddRoom(this IEndpointRouteBuilder app)
     {
-        app.MapPost("/add", HandleAsync);
+        app.MapPost("/", HandleAsync);
     }
 
     public static async Task<IResult> HandleAsync

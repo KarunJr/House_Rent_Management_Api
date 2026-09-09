@@ -11,7 +11,6 @@ public record RoomRequestDto
 );
 public record EditRoomRequestDto
 (
-    Guid Id,
     string FloorId,
     string RoomName,
     decimal BaseRentAmount,
@@ -32,3 +31,26 @@ public record RoomDetailsDto
     RoomStatus Status,
     DateTime CreatedAt
 );
+
+public record RoomCardDto
+(
+    Guid Id,
+    string FloorId,
+    string RoomName,
+    decimal BaseRentAmount,
+    RoomStatus Status,
+    RoomActiveLeaseDto? ActiveLease
+);
+
+public record RoomActiveLeaseDto
+(
+    Guid Id,
+    decimal MonthlyRent,
+    DateOnly StartDate,
+    DateOnly? EndDate,
+    RoomTenantDto Tenant
+);
+
+public record RoomTenantDto(Guid Id, string Name);
+
+public record RoomListResponseDto(bool Success, IReadOnlyList<RoomCardDto> Rooms);
