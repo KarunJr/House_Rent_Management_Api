@@ -3,17 +3,20 @@ using System;
 using HouseRentMgmt.Api.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace HouseRentMgmt.Api.Data.Migrations
+namespace HouseRentMgmt.Api.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260905161934_AddRoomsTenantsLeases")]
+    partial class AddRoomsTenantsLeases
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -120,13 +123,7 @@ namespace HouseRentMgmt.Api.Data.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("UserId", "RoomName")
-                        .IsUnique();
 
                     b.ToTable("Room");
                 });
@@ -154,13 +151,7 @@ namespace HouseRentMgmt.Api.Data.Migrations
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("UserId", "Phone")
-                        .IsUnique();
 
                     b.ToTable("Tenant");
                 });
@@ -399,28 +390,6 @@ namespace HouseRentMgmt.Api.Data.Migrations
                     b.Navigation("Tenant");
                 });
 
-            modelBuilder.Entity("HouseRentMgmt.Api.Features.Rooms.Entities.Room", b =>
-                {
-                    b.HasOne("HouseRentMgmt.Api.Infrastructure.Identity.ApplicationUser", "User")
-                        .WithMany("Rooms")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("HouseRentMgmt.Api.Features.Tenants.Entities.Tenant", b =>
-                {
-                    b.HasOne("HouseRentMgmt.Api.Infrastructure.Identity.ApplicationUser", "User")
-                        .WithMany("Tenants")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", null)
@@ -480,13 +449,6 @@ namespace HouseRentMgmt.Api.Data.Migrations
             modelBuilder.Entity("HouseRentMgmt.Api.Features.Tenants.Entities.Tenant", b =>
                 {
                     b.Navigation("Leases");
-                });
-
-            modelBuilder.Entity("HouseRentMgmt.Api.Infrastructure.Identity.ApplicationUser", b =>
-                {
-                    b.Navigation("Rooms");
-
-                    b.Navigation("Tenants");
                 });
 #pragma warning restore 612, 618
         }

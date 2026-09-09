@@ -7,10 +7,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddCustomLogging();
 
 builder.Services.AddOpenApi();
+builder.Services.AddProblemDetails();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 builder.Services.AddAllFeatureServices();
 
 var app = builder.Build();
+app.UseExceptionHandler();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -29,4 +31,3 @@ var api = app.MapGroup("/webservice/v1/api");
 api.MapAllApplicationEndPoints();
 
 app.Run();
-

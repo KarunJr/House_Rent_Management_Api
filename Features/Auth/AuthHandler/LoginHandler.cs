@@ -134,7 +134,12 @@ public static class LoginHandler
                 Name: user.Name,
                 Username: user.UserName
             ));
-            logger.LogInformation("User {UserId} logged in successfully.", user.Id);
+
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("User {UserId} logged in successfully.", user.Id);
+            }
+
             return Results.Ok(new LoginResponseDto(
                 Success: true,
                 Message: "Logged in successfully",
