@@ -49,7 +49,7 @@ public static class GetRoomById
         
         if(room is null)
         {
-            return Results.NotFound(new RoomResponseDto(false, "Room not found."));
+            return Results.NotFound(new RoomResponseDto(false, "Room not found.", null));
         }
         return Results.Ok(room);
     }

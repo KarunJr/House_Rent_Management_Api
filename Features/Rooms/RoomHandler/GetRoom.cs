@@ -19,6 +19,7 @@ public static class GetRoom
     )
     {
         var logger = loggerFactory.CreateLogger(nameof(GetRoom));
+        logger.LogInformation("Getting the rooms from the db");
         if (!Guid.TryParse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var userId))
         {
             logger.LogWarning("Room listing rejected: the authenticated user ID claim is missing or invalid.");

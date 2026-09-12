@@ -49,7 +49,7 @@ public static class AddRoom
         })
         {
             logger.LogWarning("Room creation rejected: the room name already exists for this user.");
-            return Results.Conflict(new RoomResponseDto(false, "You already have a room with this name."));
+            return Results.Conflict(new RoomResponseDto(false, "You already have a room with this name.", null));
         }
         catch (DbUpdateException ex) when (ex.InnerException is PostgresException
         {
@@ -67,13 +67,14 @@ public static class AddRoom
                 newRoom.Id, newRoom.UserId, newRoom.Status);
         }
 
-        var response = new RoomDetailsDto(
+        var roomDetails = new RoomDetails(
             newRoom.Id,
             newRoom.FloorId,
             newRoom.RoomName,
             newRoom.BaseRentAmount,
             newRoom.Status,
             newRoom.CreatedAt);
+        var response = new RoomResponseDto(true, "Room added successfully.", roomDetails);
 
         return Results.Created($"/webservice/v1/api/room/{newRoom.Id}", response);
     }
