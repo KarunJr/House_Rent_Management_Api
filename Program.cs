@@ -8,6 +8,7 @@ builder.AddCustomLogging();
 
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
+builder.Services.AddValidation();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 builder.Services.AddAllFeatureServices();
 

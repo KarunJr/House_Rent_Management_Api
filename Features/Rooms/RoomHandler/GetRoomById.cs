@@ -20,6 +20,7 @@ public static class GetRoomById
     )
     {
         var logger = loggerFactory.CreateLogger(nameof(GetRoomById));
+        logger.LogInformation("Getting single room route");
         if (!Guid.TryParse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var userId))
         {
             logger.LogWarning("Room lookup rejected: the authenticated user ID claim is missing or invalid.");
@@ -35,6 +36,7 @@ public static class GetRoomById
                 RoomName: r.RoomName,
                 BaseRentAmount: r.BaseRentAmount,
                 Status: r.Status,
+                HasLease: r.Leases.Any(l => l.IsActive || l.EndDate == null),
                 ActiveLease: r.Leases.Where(l => l.IsActive)
                                     .Select(l => new RoomActiveLeaseDto(
                                         Id: l.Id,
@@ -46,11 +48,11 @@ public static class GetRoomById
 
             )
             ).FirstOrDefaultAsync();
-        
-        if(room is null)
+
+        if (room is null)
         {
-            return Results.NotFound(new RoomResponseDto(false, "Room not found."));
+            return Results.NotFound(new SingleRoomResponseDto(false, "Room not found.", null));
         }
-        return Results.Ok(room);
+        return Results.Ok(new SingleRoomResponseDto(true, "Room found", room));
     }
 }

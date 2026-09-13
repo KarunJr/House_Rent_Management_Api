@@ -34,7 +34,7 @@ public static class EditRoom
         if (room is null)
         {
             logger.LogWarning("Room update rejected: the room was not found for the authenticated user.");
-            return Results.NotFound(new RoomResponseDto(false, "Room not found."));
+            return Results.NotFound(new RoomResponseDto(false, "Room not found.", null));
         }
 
         room.RoomName = editRoomRequestDto.RoomName;
@@ -49,7 +49,7 @@ public static class EditRoom
         catch (DbUpdateConcurrencyException)
         {
             logger.LogWarning("Room update failed: the expected room row was not updated; it may have been deleted before saving.");
-            return Results.Conflict(new RoomResponseDto(false, "The room could not be updated. It may have been deleted. Reload and try again."));
+            return Results.Conflict(new RoomResponseDto(false, "The room could not be updated. It may have been deleted. Reload and try again.", null));
         }
         catch (DbUpdateException ex) when (ex.InnerException is PostgresException
         {
@@ -58,7 +58,7 @@ public static class EditRoom
         })
         {
             logger.LogWarning("Room update rejected: the room name already exists for this user.");
-            return Results.Conflict(new RoomResponseDto(false, "You already have a room with this name."));
+            return Results.Conflict(new RoomResponseDto(false, "You already have a room with this name.", null));
         }
 
         if (logger.IsEnabled(LogLevel.Information))
@@ -67,13 +67,15 @@ public static class EditRoom
                 id, userId, editRoomRequestDto.Status);
         }
 
-        var response = new RoomDetailsDto(
+        var roomDetails = new RoomDetails(
             room.Id,
             room.FloorId,
             room.RoomName,
             room.BaseRentAmount,
             room.Status,
             room.CreatedAt);
+        
+        var response = new RoomResponseDto(true, "Room edited successfully.", roomDetails);
 
         return Results.Ok(response);
     }

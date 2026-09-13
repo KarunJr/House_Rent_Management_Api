@@ -19,6 +19,7 @@ public static class GetRoom
     )
     {
         var logger = loggerFactory.CreateLogger(nameof(GetRoom));
+        logger.LogInformation("Getting the rooms from the db");
         if (!Guid.TryParse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var userId))
         {
             logger.LogWarning("Room listing rejected: the authenticated user ID claim is missing or invalid.");
@@ -35,6 +36,7 @@ public static class GetRoom
                 RoomName: r.RoomName,
                 BaseRentAmount: r.BaseRentAmount,
                 Status: r.Status,
+                HasLease: r.Leases.Any(l => l.IsActive || l.EndDate == null),
                 ActiveLease: r.Leases.Where(l => l.IsActive)
                                     .Select(l => new RoomActiveLeaseDto(
                                         Id: l.Id,
