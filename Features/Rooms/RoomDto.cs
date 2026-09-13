@@ -59,6 +59,11 @@ public record RoomResponseDto
     RoomDetails? RoomDetails
 );
 
+public record SingleRoomResponseDto(
+    bool Success,
+    string Message,
+    RoomCardDto? RoomDetails
+);
 
 public record RoomCardDto
 (
@@ -67,6 +72,7 @@ public record RoomCardDto
     string RoomName,
     decimal BaseRentAmount,
     RoomStatus Status,
+    bool HasLease,
     RoomActiveLeaseDto? ActiveLease
 );
 

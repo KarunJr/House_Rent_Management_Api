@@ -36,6 +36,7 @@ public static class GetRoom
                 RoomName: r.RoomName,
                 BaseRentAmount: r.BaseRentAmount,
                 Status: r.Status,
+                HasLease: r.Leases.Any(l => l.IsActive || l.EndDate == null),
                 ActiveLease: r.Leases.Where(l => l.IsActive)
                                     .Select(l => new RoomActiveLeaseDto(
                                         Id: l.Id,
