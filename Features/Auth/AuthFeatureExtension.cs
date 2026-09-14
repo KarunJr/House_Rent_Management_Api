@@ -27,6 +27,7 @@ public static class AuthFeatureExtension
         group.MapVerifyEmail();
         group.MapResendEmail();
         group.MapLogin();
+        group.MapCheckAuth();
         return app;
     }
 }
