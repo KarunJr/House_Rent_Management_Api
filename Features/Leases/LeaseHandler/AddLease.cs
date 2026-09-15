@@ -29,8 +29,7 @@ public static class AddLease
             return Results.Unauthorized();
         }
 
-        // The overlap check and insert must share a serializable transaction,
-        // including for inactive future reservations that the active index cannot protect.
+        // Keep availability, history overlap checks, and creation in one transaction.
         await using var transaction = await dbContext.Database.BeginTransactionAsync(
             IsolationLevel.Serializable, cancellationToken);
 
@@ -51,7 +50,7 @@ public static class AddLease
                 return Results.Conflict(new LeaseResponseDto(false, "The room is not available for a new lease."));
 
             // New leases are open-ended. Treat existing end dates as inclusive.
-            // Check inactive reservations too, not only currently active leases.
+            // Include all lease history, not only currently active leases.
             var hasConflict = await dbContext.Lease.AnyAsync(l =>
                 l.RoomId == room.Id &&
                 (l.IsActive || l.EndDate == null || l.EndDate >= request.StartDate),
@@ -67,12 +66,11 @@ public static class AddLease
                 MonthlyRent = request.MonthlyRent,
                 StartDate = request.StartDate,
                 EndDate = null,
-                IsActive = request.StartDate <= DateOnly.FromDateTime(now),
+                IsActive = true,
                 CreatedAt = now
             };
 
-            if (lease.IsActive)
-                room.Status = RoomStatus.Occupied;
+            room.Status = RoomStatus.Occupied;
 
             dbContext.Lease.Add(lease);
             await dbContext.SaveChangesAsync(cancellationToken);

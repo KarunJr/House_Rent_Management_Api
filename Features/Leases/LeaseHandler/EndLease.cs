@@ -54,9 +54,6 @@ public static class EndLease
             if (request.EndDate < lease.StartDate)
                 return Results.BadRequest(new LeaseResponseDto(false, "The end date cannot be before the lease start date."));
 
-            if (request.EndDate > DateOnly.FromDateTime(DateTime.UtcNow))
-                return Results.BadRequest(new LeaseResponseDto(false, "The end date cannot be in the future."));
-
             lease.EndDate = request.EndDate;
             lease.IsActive = false;
 
