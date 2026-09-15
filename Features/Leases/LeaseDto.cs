@@ -13,6 +13,7 @@ public record AddLeaseRequestDto(
     [NonDefault(ErrorMessage = "Select a tenant")]
     public Guid TenantId { get; init; } = TenantId;
     [NonDefault(ErrorMessage = "Start date is required")]
+    [NotFutureDate(ErrorMessage = "Start date cannot be in the future.")]
     public DateOnly StartDate { get; init; } = StartDate;
     [Range(typeof(decimal), "0", "9999999", MinimumIsExclusive = true, ErrorMessage = "Monthly rent must be greater than 0 and no more than 9999999")]
     public decimal MonthlyRent { get; init; } = MonthlyRent;
@@ -35,5 +36,6 @@ public record EndLeaseDto(
     DateOnly EndDate)
 {
     [NonDefault(ErrorMessage = "Move-out date is required")]
+    [NotFutureDate(ErrorMessage = "Move-out date cannot be in the future.")]
     public DateOnly EndDate { get; init; } = EndDate;
 }

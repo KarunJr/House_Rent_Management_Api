@@ -1,4 +1,6 @@
+using System.Data;
 using System.Security.Claims;
+using HouseRentMgmt.Api.Features.Rooms.Entities;
 using HouseRentMgmt.Api.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
@@ -18,7 +20,8 @@ public static class EditRoom
         EditRoomRequestDto editRoomRequestDto,
         ClaimsPrincipal user,
         ApplicationDbContext dbContext,
-        ILoggerFactory loggerFactory
+        ILoggerFactory loggerFactory,
+        CancellationToken cancellationToken
     )
     {
         var logger = loggerFactory.CreateLogger(nameof(EditRoom));
@@ -28,23 +31,46 @@ public static class EditRoom
             return Results.Unauthorized();
         }
 
-        var room = await dbContext.Room.FirstOrDefaultAsync(
-            r => r.Id == id && r.UserId == userId);
+        // Read the lease state and save the room in the same isolation level
+        // used by lease creation/ending, so competing changes cannot bypass the guard.
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(
+            IsolationLevel.Serializable, cancellationToken);
 
-        if (room is null)
-        {
-            logger.LogWarning("Room update rejected: the room was not found for the authenticated user.");
-            return Results.NotFound(new RoomResponseDto(false, "Room not found.", null));
-        }
-
-        room.RoomName = editRoomRequestDto.RoomName;
-        room.FloorId = editRoomRequestDto.FloorId;
-        room.BaseRentAmount = editRoomRequestDto.BaseRentAmount;
-        room.Status = editRoomRequestDto.Status;
-
+        Room room;
         try
         {
-            await dbContext.SaveChangesAsync();
+            var existingRoom = await dbContext.Room.FirstOrDefaultAsync(
+                r => r.Id == id && r.UserId == userId, cancellationToken);
+
+            if (existingRoom is null)
+            {
+                logger.LogWarning("Room update rejected: the room was not found for the authenticated user.");
+                return Results.NotFound(new RoomResponseDto(false, "Room not found.", null));
+            }
+            room = existingRoom;
+
+            var hasActiveLease = await dbContext.Lease.AnyAsync(
+                lease => lease.RoomId == room.Id && lease.IsActive, cancellationToken);
+
+            if (hasActiveLease && editRoomRequestDto.Status != RoomStatus.Occupied)
+            {
+                return Results.Conflict(new RoomResponseDto(false,
+                    "End the active lease before changing the room status.", null));
+            }
+
+            if (!hasActiveLease && editRoomRequestDto.Status == RoomStatus.Occupied)
+            {
+                return Results.Conflict(new RoomResponseDto(false,
+                    "Create a lease to mark this room occupied.", null));
+            }
+
+            room.RoomName = editRoomRequestDto.RoomName;
+            room.FloorId = editRoomRequestDto.FloorId;
+            room.BaseRentAmount = editRoomRequestDto.BaseRentAmount;
+            room.Status = editRoomRequestDto.Status;
+
+            await dbContext.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
         }
         catch (DbUpdateConcurrencyException)
         {
@@ -59,6 +85,14 @@ public static class EditRoom
         {
             logger.LogWarning("Room update rejected: the room name already exists for this user.");
             return Results.Conflict(new RoomResponseDto(false, "You already have a room with this name.", null));
+        }
+
+        catch (Exception ex) when (ex is PostgresException { SqlState: PostgresErrorCodes.SerializationFailure }
+            || ex is DbUpdateException { InnerException: PostgresException { SqlState: PostgresErrorCodes.SerializationFailure } })
+        {
+            logger.LogWarning("Room update conflicted with another database transaction.");
+            return Results.Conflict(new RoomResponseDto(false,
+                "The room or lease changed while saving. Reload and try again.", null));
         }
 
         if (logger.IsEnabled(LogLevel.Information))
